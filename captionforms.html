@@ -156,14 +156,13 @@
     <footer class="bg-cud-dark text-white py-3 px-4 sm:px-6 flex justify-between items-center text-xs w-full shrink-0 z-50 border-t border-gray-800">
         <!-- 左端 -->
         <div class="flex items-center gap-4">
-            <div class="bg-white p-1 rounded h-10 w-auto flex items-center justify-center shadow-inner">
-                <img src="endologo-white.svg" onerror="this.src='https://placehold.co/80x40/ffffff/000000?text=ENDO'" alt="Endo Logo" class="h-full object-contain max-w-[80px]">
+            <div class="h-10 w-auto flex items-center justify-center">
+                <img src="endologo-white.svg" onerror="this.src='https://placehold.co/80x40/222222/ffffff?text=ENDO'" alt="Endo Logo" class="h-full object-contain max-w-[80px]">
             </div>
         </div>
         
         <!-- 右端 -->
         <div class="flex items-center gap-4 text-right">
-            <button onclick="toggleAdminModal()" class="text-cud-gray hover:text-white mr-2" title="管理者設定">⚙️</button>
             <div class="flex flex-col text-cud-lightgray">
                 <span class="font-bold tracking-wider text-[9px] sm:text-[10px] text-white">System Architect: HIROYUKI ENDO</span>
                 <span class="text-[8px] sm:text-[9px]">© 2026 Midnight Express Computational Archives</span>
@@ -174,59 +173,14 @@
         </div>
     </footer>
 
-    <!-- 管理者設定モーダル (GAS URL保存用) -->
-    <div id="admin-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 px-4">
-        <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-            <h3 class="text-lg font-bold mb-4 text-cud-dark border-b pb-2">⚙️ 管理者設定 (GAS連携)</h3>
-            <p class="text-xs text-cud-gray mb-4">スプレッドシート連携用のウェブアプリURLを設定します。この設定はブラウザに保存されます。</p>
-            <input type="text" id="gas-url-admin" placeholder="https://script.google.com/macros/s/.../exec" class="w-full p-2 border border-cud-gray rounded mb-4 text-sm text-cud-dark">
-            <div class="flex justify-end gap-2">
-                <button type="button" onclick="toggleAdminModal()" class="px-4 py-2 bg-gray-200 text-cud-dark rounded hover:bg-gray-300 text-sm font-bold">キャンセル</button>
-                <button type="button" onclick="saveGasUrl()" class="px-4 py-2 bg-cud-btn-blue text-white rounded hover:bg-blue-800 text-sm font-bold">URLをブラウザに保存</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // 管理者用 GAS URLの読み込み
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedUrl = localStorage.getItem('soken_gas_url');
-            if (savedUrl) {
-                document.getElementById('gas-url-admin').value = savedUrl;
-            }
-        });
-
-        function toggleAdminModal() {
-            const modal = document.getElementById('admin-modal');
-            if (modal.classList.contains('hidden')) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            } else {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
-        }
-
-        function saveGasUrl() {
-            const url = document.getElementById('gas-url-admin').value;
-            localStorage.setItem('soken_gas_url', url);
-            alert('GASのURLを保存しました。');
-            toggleAdminModal();
-        }
-
         // フォーム送信処理 (async/await を追加した完全版)
         document.getElementById('submission-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const btn = document.getElementById('submit-btn');
             const statusDiv = document.getElementById('status-message');
-            const gasUrl = localStorage.getItem('soken_gas_url');
-
-            if (!gasUrl) {
-                statusDiv.textContent = 'エラー: 右下の⚙️アイコンからGASのURLを設定してください。';
-                statusDiv.className = 'mt-4 text-center font-bold text-sm h-6 text-cud-red';
-                return;
-            }
+            const gasUrl = 'https://script.google.com/macros/s/AKfycbzm1PgvvcVz0s7KGIQzxGl7cs0I8YNrjvvyc8VvxUiftD_WvmKp7BX9UMGF4tjoEYG9_A/exec';
 
             // データ収集
             const formData = {
