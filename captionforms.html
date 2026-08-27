@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>創作研究部 作品登録フォーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/line-seed-jp@1.0.1/dist/line-seed-jp.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"LINE Seed JP"', 'sans-serif'],
+                    },
+                    colors: {
+                        cud: {
+                            blue: '#005AFF',
+                            'btn-blue': '#0041C2', /* WCAG 2.2 コントラスト確保 */
+                            dark: '#222222',
+                            gray: '#84919E',
+                            lightgray: '#C8C8CB',
+                            green: '#03AF7A',
+                            red: '#FF4B00',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'LINE Seed JP', sans-serif;
+            background-color: #f3f4f6;
+            color: #222222;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #84919E;
+            margin-top: 0.25rem;
+            font-size: 1rem;
+            background-color: white;
+            color: #222222;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #005AFF;
+            box-shadow: 0 0 0 2px rgba(0, 90, 255, 0.2);
+        }
+        label {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #222222;
+            display: block;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <div class="flex-1 p-4 md:p-8">
+        <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+            <div class="bg-cud-dark p-6 text-white text-center">
+                <h1 class="text-2xl font-bold">作品登録フォーム</h1>
+                <p class="text-sm text-cud-lightgray mt-1">創作研究部 キャプション・名札用データ提出</p>
+            </div>
+
+            <form id="submission-form" class="p-6 md:p-8">
+                <!-- 共通情報 -->
+                <div class="mb-8 pb-6 border-b border-gray-200">
+                    <h2 class="text-lg font-bold text-cud-btn-blue mb-4 flex items-center gap-2">
+                        <span class="bg-[#E6F3FF] p-1 rounded">📋</span> 共通情報
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label>イベント名</label>
+                            <input type="text" id="eventName" value="第66回狭丘祭（2026年度）" class="form-input">
+                        </div>
+                        <div>
+                            <label>開催日</label>
+                            <input type="text" id="eventDate" value="令和8年9月5日（土）・6日（日）" class="form-input">
+                        </div>
+                        <div>
+                            <label>制作年</label>
+                            <input type="text" id="year" value="2026" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 作品情報 -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-cud-btn-blue mb-4 flex items-center gap-2">
+                        <span class="bg-[#E6F3FF] p-1 rounded">🎨</span> 作品・作者情報
+                    </h2>
+                    
+                    <label>作品ID <span class="text-xs font-normal text-cud-gray">※割り当てられている場合のみ</span></label>
+                    <input type="text" id="workId" placeholder="A-01" class="form-input">
+
+                    <label>作品名 <span class="text-cud-red">*</span></label>
+                    <input type="text" id="title" placeholder="星月夜の夢" required class="form-input font-bold">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label>作者名 (本名) <span class="text-cud-red">*</span></label>
+                            <input type="text" id="authorName" placeholder="狭山 太郎" required class="form-input">
+                        </div>
+                        <div>
+                            <label>ローマ字表記 <span class="text-cud-red">*</span></label>
+                            <input type="text" id="authorRomaji" placeholder="Taro Sayama" required class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label>ペンネーム (PN)</label>
+                            <input type="text" id="penName" placeholder="サヤタロ" class="form-input">
+                        </div>
+                        <div>
+                            <label>学年・所属 <span class="text-cud-red">*</span></label>
+                            <input type="text" id="schoolGrade" placeholder="高等学校 2年A組" required class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label>画材 <span class="text-cud-red">*</span></label>
+                            <input type="text" id="medium" placeholder="デジタル / アクリル 等" required class="form-input">
+                        </div>
+                        <div>
+                            <label>サイズ <span class="text-cud-red">*</span></label>
+                            <input type="text" id="size" placeholder="A3 / B4 等" required class="form-input">
+                        </div>
+                    </div>
+
+                    <label>備考 (裏面ラベル用)</label>
+                    <input type="text" id="remarks" placeholder="表紙用 / 返却希望 等" class="form-input">
+
+                    <label>制作コメント (展示キャプション用)</label>
+                    <textarea id="comment" rows="4" placeholder="作品に込めた思い、こだわったポイントなどを自由にお書きください。" class="form-input"></textarea>
+                </div>
+
+                <!-- 提出ボタン -->
+                <div class="mt-8">
+                    <button type="submit" id="submit-btn" class="w-full bg-cud-btn-blue hover:bg-blue-800 text-white font-bold py-4 rounded-xl shadow-md transition duration-200 text-lg flex justify-center items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                        この内容で提出する
+                    </button>
+                    <div id="status-message" class="mt-4 text-center font-bold text-sm h-6"></div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="bg-cud-dark text-white py-3 px-4 sm:px-6 flex justify-between items-center text-xs w-full shrink-0 z-50 border-t border-gray-800">
+        <!-- 左端 -->
+        <div class="flex items-center gap-4">
+            <div class="bg-white p-1 rounded h-10 w-auto flex items-center justify-center shadow-inner">
+                <img src="endologo.svg" onerror="this.src='https://placehold.co/80x40/ffffff/000000?text=ENDO'" alt="Endo Logo" class="h-full object-contain max-w-[80px]">
+            </div>
+        </div>
+        
+        <!-- 右端 -->
+        <div class="flex items-center gap-4 text-right">
+            <button onclick="toggleAdminModal()" class="text-cud-gray hover:text-white mr-2" title="管理者設定">⚙️</button>
+            <div class="flex flex-col text-cud-lightgray">
+                <span class="font-bold tracking-wider text-[9px] sm:text-[10px] text-white">System Architect: HIROYUKI ENDO</span>
+                <span class="text-[8px] sm:text-[9px]">© 2026 Midnight Express Computational Archives</span>
+            </div>
+            <div class="h-10 w-auto flex items-center justify-center">
+                <img src="mecalogo-white.svg" onerror="this.src='https://placehold.co/80x40/222222/ffffff?text=MECA'" alt="MECA Logo" class="h-full object-contain max-w-[80px]">
+            </div>
+        </div>
+    </footer>
+
+    <!-- 管理者設定モーダル (GAS URL保存用) -->
+    <div id="admin-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 px-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+            <h3 class="text-lg font-bold mb-4 text-cud-dark border-b pb-2">⚙️ 管理者設定 (GAS連携)</h3>
+            <p class="text-xs text-cud-gray mb-4">スプレッドシート連携用のウェブアプリURLを設定します。この設定はブラウザに保存されます。</p>
+            <input type="text" id="gas-url-admin" placeholder="https://script.google.com/macros/s/.../exec" class="w-full p-2 border border-cud-gray rounded mb-4 text-sm text-cud-dark">
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="toggleAdminModal()" class="px-4 py-2 bg-gray-200 text-cud-dark rounded hover:bg-gray-300 text-sm font-bold">キャンセル</button>
+                <button type="button" onclick="saveGasUrl()" class="px-4 py-2 bg-cud-btn-blue text-white rounded hover:bg-blue-800 text-sm font-bold">URLをブラウザに保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 管理者用 GAS URLの読み込み
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUrl = localStorage.getItem('soken_gas_url');
+            if (savedUrl) {
+                document.getElementById('gas-url-admin').value = savedUrl;
+            }
+        });
+
+        function toggleAdminModal() {
+            const modal = document.getElementById('admin-modal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function saveGasUrl() {
+            const url = document.getElementById('gas-url-admin').value;
+            localStorage.setItem('soken_gas_url', url);
+            alert('GASのURLを保存しました。');
+            toggleAdminModal();
+        }
+
+        // フォーム送信処理 (async/await を追加した完全版)
+        document.getElementById('submission-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submit-btn');
+            const statusDiv = document.getElementById('status-message');
+            const gasUrl = localStorage.getItem('soken_gas_url');
+
+            if (!gasUrl) {
+                statusDiv.textContent = 'エラー: 右下の⚙️アイコンからGASのURLを設定してください。';
+                statusDiv.className = 'mt-4 text-center font-bold text-sm h-6 text-cud-red';
+                return;
+            }
+
+            // データ収集
+            const formData = {
+                eventName: document.getElementById('eventName').value,
+                eventDate: document.getElementById('eventDate').value,
+                year: document.getElementById('year').value,
+                workId: document.getElementById('workId').value,
+                title: document.getElementById('title').value,
+                authorName: document.getElementById('authorName').value,
+                authorRomaji: document.getElementById('authorRomaji').value,
+                penName: document.getElementById('penName').value,
+                schoolGrade: document.getElementById('schoolGrade').value,
+                medium: document.getElementById('medium').value,
+                size: document.getElementById('size').value,
+                remarks: document.getElementById('remarks').value,
+                comment: document.getElementById('comment').value,
+            };
+
+            // 送信中のUI変更
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 送信中...';
+            statusDiv.textContent = '';
+
+            try {
+                // fetch に await を使用 (これでエラーが解消されます)
+                const response = await fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // GASへのPOSTの基本設定
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                // no-cors のため response.ok 等は確認できないが、エラーでなければ成功とする
+                statusDiv.textContent = '🎉 送信が完了しました！';
+                statusDiv.className = 'mt-4 text-center font-bold text-sm h-6 text-cud-green';
+                
+                // フォームをリセット (共通情報以外)
+                document.getElementById('workId').value = '';
+                document.getElementById('title').value = '';
+                document.getElementById('remarks').value = '';
+                document.getElementById('comment').value = '';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.textContent = '❌ エラーが発生しました。通信環境を確認してください。';
+                statusDiv.className = 'mt-4 text-center font-bold text-sm h-6 text-cud-red';
+            } finally {
+                // ボタンの復元
+                btn.disabled = false;
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg> この内容で提出する';
+            }
+        });
+    </script>
+</body>
+</html>

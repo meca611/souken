@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>創作研究部 キャプションジェネレーター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/line-seed-jp@1.0.1/dist/line-seed-jp.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"LINE Seed JP"', 'sans-serif'],
+                        serif: ['"Noto Serif JP"', 'serif'],
+                    },
+                    colors: {
+                        cud: {
+                            red: '#FF4B00',
+                            yellow: '#F6AA00',
+                            green: '#03AF7A',
+                            blue: '#005AFF',
+                            'btn-blue': '#0041C2', /* WCAG 2.2 コントラスト比確保用 */
+                            skyblue: '#4DC4FF',
+                            pink: '#FF8082',
+                            orange: '#FF8E00',
+                            purple: '#990099',
+                            brown: '#804000',
+                            black: '#000000',
+                            dark: '#222222',
+                            gray: '#84919E',
+                            lightgray: '#C8C8CB',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'LINE Seed JP', sans-serif;
+            background-color: #f3f4f6;
+            color: #222222; /* CUD Dark */
+        }
+        
+        /* 印刷時の設定 */
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            
+            /* テプラ用（横長）の設定 */
+            body[data-print-mode="tepra"] @page {
+                size: landscape;
+                margin: 0;
+            }
+            body[data-print-mode="tepra"] #print-root {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            /* A4用（展示キャプション）の設定 */
+            body[data-print-mode="caption"] @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            body[data-print-mode="caption"] #print-root {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10mm;
+                justify-content: flex-start;
+                align-content: flex-start;
+            }
+        }
+        
+        .print-only { display: none; }
+        
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #C8C8CB; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #84919E; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden" data-print-mode="">
+
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- 左側：入力フォームサイドバー -->
+        <div class="w-full md:w-1/3 lg:w-[350px] bg-white shadow-lg z-10 flex flex-col h-full overflow-y-auto no-print border-r border-gray-200">
+            <div class="p-5 bg-cud-dark text-white sticky top-0 z-20 shadow-md">
+                <h1 class="text-xl font-bold mb-1">創作研究部</h1>
+                <h2 class="text-sm font-medium text-cud-lightgray">キャプションジェネレーター</h2>
+            </div>
+
+            <div class="p-5 space-y-5 flex-grow">
+                <!-- GAS Integration -->
+                <div class="space-y-3 bg-[#E6F3FF] p-4 rounded-lg border border-[#4DC4FF]">
+                    <h3 class="text-sm font-bold text-cud-btn-blue uppercase tracking-wider border-b border-[#4DC4FF] pb-2">データ連携 (GAS)</h3>
+                    <div>
+                        <label class="block text-xs font-medium text-cud-btn-blue mb-1">スプレッドシートGAS URL</label>
+                        <input type="text" id="gasUrl" placeholder="https://script.google.com/..." class="w-full px-3 py-2 border border-cud-gray rounded-md focus:outline-none focus:ring-2 focus:ring-cud-blue text-xs bg-white text-cud-dark">
+                    </div>
+                    <button type="button" onclick="fetchFromGAS()" class="w-full bg-cud-btn-blue hover:bg-blue-800 text-white font-bold py-2 px-3 rounded text-sm transition duration-150 ease-in-out flex justify-center items-center gap-2 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        データを読み込む
+                    </button>
+                    <div id="gas-status" class="text-xs text-center font-bold h-4"></div>
+                </div>
+
+                <form id="captionForm" class="space-y-4 text-sm" oninput="updatePreview()">
+                    <!-- 共通情報 -->
+                    <div class="space-y-3">
+                        <h3 class="font-bold text-cud-dark border-b pb-1">共通情報</h3>
+                        <div>
+                            <label class="block text-xs font-medium text-cud-dark">イベント名</label>
+                            <input type="text" id="eventName" value="第66回狭丘祭（2026年度）" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-cud-dark">開催日</label>
+                                <input type="text" id="eventDate" value="令和8年9月5日（土）・6日（日）" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                            </div>
+                            <div class="w-24">
+                                <label class="block text-xs font-medium text-cud-dark">制作年</label>
+                                <input type="text" id="year" value="2026" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 作品情報 -->
+                    <div class="space-y-3">
+                        <h3 class="font-bold text-cud-dark border-b pb-1 mt-4">作品・作者情報</h3>
+                        <div>
+                            <label class="block text-xs font-medium text-cud-dark">作品ID (A-01等)</label>
+                            <input type="text" id="workId" placeholder="A-01" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-cud-dark">作品名</label>
+                            <input type="text" id="title" placeholder="作品名を入力" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue font-bold">
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-cud-dark">作者名</label>
+                                <input type="text" id="author" placeholder="狭山 太郎" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-cud-dark">ローマ字表記</label>
+                                <input type="text" id="authorRomaji" placeholder="Taro Sayama" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-cud-dark">ペンネーム (PN)</label>
+                            <input type="text" id="penName" placeholder="サヤタロ" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-cud-dark">学年・所属</label>
+                            <input type="text" id="schoolGrade" placeholder="高等学校 2年A組" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-cud-dark">画材 (デジタル等)</label>
+                                <input type="text" id="medium" placeholder="デジタル" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                            </div>
+                            <div class="w-24">
+                                <label class="block text-xs font-medium text-cud-dark">サイズ</label>
+                                <input type="text" id="size" placeholder="A4" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-cud-dark">備考 (裏面用)</label>
+                            <input type="text" id="remarks" placeholder="表紙用" class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-cud-dark">制作コメント (展示用)</label>
+                            <textarea id="comment" rows="3" placeholder="作品に込めた思いなど..." class="mt-1 block w-full rounded-md border-cud-gray border px-3 py-2 text-cud-dark focus:border-cud-blue focus:ring-cud-blue"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="p-5 border-t border-gray-200 bg-gray-50 sticky bottom-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
+                <div class="flex gap-2 mb-3">
+                    <button type="button" id="addListBtn" onclick="addToList()" class="flex-1 bg-cud-btn-blue hover:bg-blue-800 text-white font-bold py-2 px-2 rounded-lg shadow transition duration-150 ease-in-out text-sm text-center">
+                        リストに追加 / 更新
+                    </button>
+                    <button type="button" onclick="clearForm()" class="flex-1 bg-white border border-cud-gray hover:bg-gray-100 text-cud-dark font-bold py-2 px-2 rounded-lg shadow-sm transition duration-150 ease-in-out text-sm text-center">
+                        新規クリア
+                    </button>
+                </div>
+                
+                <div class="flex flex-col gap-2">
+                    <button onclick="printLabels('tepra')" class="w-full bg-cud-dark hover:bg-black text-white font-bold py-2.5 px-4 rounded-lg shadow transition duration-150 ease-in-out flex justify-center items-center gap-2 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                        🏷️ 裏面ラベル印刷 (18mm)
+                    </button>
+                    <button onclick="printLabels('caption')" class="w-full bg-cud-btn-blue hover:bg-blue-800 text-white font-bold py-2.5 px-4 rounded-lg shadow transition duration-150 ease-in-out flex justify-center items-center gap-2 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        🖼️ 展示キャプション印刷 (A4)
+                    </button>
+                </div>
+                <p class="text-[10px] text-cud-gray text-center mt-2 leading-tight">※リストに追加された作品が印刷されます。<br>未追加の場合はプレビュー中の1件を印刷します。</p>
+            </div>
+        </div>
+
+        <div class="flex-1 bg-gray-200 overflow-y-auto p-4 md:p-8 no-print">
+            <div class="max-w-4xl mx-auto space-y-8">
+                
+                <!-- プレビュー: テプラ用 (裏面) -->
+                <div>
+                    <h2 class="text-lg font-bold text-cud-dark mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cud-gray" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        プレビュー: 裏面ラベル (18mmテプラ用)
+                    </h2>
+                    <div class="bg-gray-100 p-6 shadow-inner border border-gray-300 mx-auto overflow-x-auto flex justify-center items-center rounded-lg" style="min-height: 120px;">
+                        <!-- テプラ シミュレーション -->
+                        <div class="bg-white border border-gray-400 shadow-sm flex items-center whitespace-nowrap overflow-hidden relative" style="height: 18mm; width: max-content; min-width: 400px; padding: 0 4mm;">
+                            <!-- テープの端のグラデーション -->
+                            <div class="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-r from-gray-200 to-transparent"></div>
+                            <div class="absolute right-0 top-0 bottom-0 w-2 bg-gradient-to-l from-gray-200 to-transparent"></div>
+                            
+                            <div class="font-bold border-r-2 border-cud-dark pr-3 mr-3 text-lg" id="preview-work-id">
+                                A-01
+                            </div>
+                            <div class="flex flex-col justify-center">
+                                <div class="font-bold text-base leading-tight text-black" id="preview-tepra-title">作品名</div>
+                                <div class="text-xs text-cud-dark leading-tight mt-1 flex items-center gap-2">
+                                    <span id="preview-tepra-author">作者名</span>
+                                    <span id="preview-tepra-grade" class="text-gray-600">所属</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- プレビュー: 展示キャプション (A4) -->
+                <div>
+                    <h2 class="text-lg font-bold text-cud-dark mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cud-gray" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        プレビュー: 展示用キャプション
+                    </h2>
+                    <div class="bg-gray-100 p-8 shadow-inner border border-gray-300 mx-auto rounded-lg overflow-x-auto flex justify-center items-center">
+                        <!-- キャプションボード シミュレーション (約148mm x 100mm) -->
+                        <div class="bg-white shadow-md relative border border-cud-lightgray flex flex-col" style="width: 148mm; height: 100mm; padding: 32px; box-sizing: border-box;">
+                            <div class="w-full border-t border-black mb-6"></div>
+                            
+                            <div class="flex-grow flex flex-col">
+                                <h2 id="preview-disp-title" class="text-2xl font-bold mb-4 font-serif tracking-wider text-black mt-0">作品名</h2>
+                                
+                                <div class="mb-4">
+                                    <div class="flex items-baseline gap-4 mb-2">
+                                        <span id="preview-disp-author" class="text-xl font-medium font-serif text-black tracking-widest">作者名</span>
+                                        <span id="preview-disp-romaji" class="text-sm text-gray-700 italic font-serif">Romaji</span>
+                                    </div>
+                                    <div id="preview-disp-grade" class="text-sm text-cud-dark">所属</div>
+                                </div>
+                                
+                                <div class="w-full border-t border-cud-lightgray mb-4"></div>
+                                
+                                <div class="mb-4 text-sm text-cud-dark italic font-serif flex flex-col gap-1">
+                                    <div id="preview-disp-year">2026</div>
+                                    <div id="preview-disp-medium">画材</div>
+                                </div>
+
+                                <div class="flex-grow">
+                                    <p id="preview-disp-comment" class="text-xs text-cud-dark leading-relaxed text-justify m-0"></p>
+                                </div>
+                            </div>
+                            
+                            <!-- ロゴ・署名エリア -->
+                            <div class="mt-4 flex justify-end items-end gap-2 pt-4 border-t border-cud-lightgray">
+                                <div class="text-[10px] text-right text-gray-700 leading-tight">
+                                    <div>狭山ヶ丘高等学校</div>
+                                    <div>狭山ヶ丘高等学校付属中学校</div>
+                                </div>
+                                <div class="text-base font-bold font-serif tracking-widest text-black">
+                                    創作研究部
+                                </div>
+                                <div class="w-8 h-8 opacity-80 ml-2">
+                                    <img src="soukenlogo.svg" onerror="this.src='https://placehold.co/40x40/transparent/990099?text=SO'" alt="ロゴ" class="w-full h-full object-contain">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h2 class="text-lg font-bold text-cud-dark flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cud-gray" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                            一括印刷リスト
+                        </h2>
+                        <span id="list-count" class="bg-[#E6F3FF] text-cud-btn-blue text-xs font-bold px-3 py-1 rounded-full border border-[#4DC4FF]">0件</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3">作品名</th>
+                                    <th scope="col" class="px-4 py-3">作者名</th>
+                                    <th scope="col" class="px-4 py-3">サイズ</th>
+                                    <th scope="col" class="px-4 py-3 text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="caption-list-body">
+                                <tr class="border-b"><td colspan="4" class="px-4 py-8 text-center text-cud-gray">リストは空です。左側のフォームから追加してください。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="bg-cud-dark text-white py-3 px-4 sm:px-6 flex justify-between items-center text-xs w-full shrink-0 z-50 no-print border-t border-gray-800">
+        <!-- 左端 -->
+        <div class="flex items-center gap-4">
+            <div class="bg-white p-1 rounded h-10 w-auto flex items-center justify-center shadow-inner">
+                <img src="endologo.svg" onerror="this.src='https://placehold.co/80x40/ffffff/000000?text=ENDO'" alt="Endo Logo" class="h-full object-contain max-w-[80px]">
+            </div>
+        </div>
+        
+        <!-- 右端 -->
+        <div class="flex items-center gap-4 text-right">
+            <div class="flex flex-col text-cud-lightgray">
+                <span class="font-bold tracking-wider text-[9px] sm:text-[10px] text-white">System Architect: HIROYUKI ENDO</span>
+                <span class="text-[8px] sm:text-[9px]">© 2026 Midnight Express Computational Archives</span>
+            </div>
+            <div class="h-10 w-auto flex items-center justify-center">
+                <img src="mecalogo-white.svg" onerror="this.src='https://placehold.co/80x40/222222/ffffff?text=MECA'" alt="MECA Logo" class="h-full object-contain max-w-[80px]">
+            </div>
+        </div>
+    </footer>
+
+    <!-- 印刷時のみ表示される要素 -->
+    <div id="print-root" class="print-only"></div>
+
+    <script>
+        // --- 状態管理 ---
+        let captionsList = [];
+        let currentEditingId = null;
+
+        // --- プレビュー更新処理 ---
+        function updatePreview() {
+            // 入力値の取得
+            const workId = document.getElementById('workId').value || '未設定';
+            const title = document.getElementById('title').value || '作品名未入力';
+            const author = document.getElementById('author').value || '作者未入力';
+            const authorRomaji = document.getElementById('authorRomaji').value || '';
+            const schoolGrade = document.getElementById('schoolGrade').value || '';
+            const year = document.getElementById('year').value || '';
+            const medium = document.getElementById('medium').value || '';
+            const comment = document.getElementById('comment').value || '';
+
+            // テプラプレビューの更新
+            document.getElementById('preview-work-id').textContent = workId;
+            document.getElementById('preview-tepra-title').textContent = title;
+            document.getElementById('preview-tepra-author').textContent = author;
+            document.getElementById('preview-tepra-grade').textContent = schoolGrade ? `(${schoolGrade})` : '';
+
+            // 展示用プレビューの更新
+            document.getElementById('preview-disp-title').textContent = title;
+            document.getElementById('preview-disp-author').textContent = author;
+            document.getElementById('preview-disp-romaji').textContent = authorRomaji;
+            document.getElementById('preview-disp-grade').textContent = schoolGrade;
+            document.getElementById('preview-disp-year').textContent = year;
+            document.getElementById('preview-disp-medium').textContent = medium;
+            
+            // コメントの改行反映
+            const commentEl = document.getElementById('preview-disp-comment');
+            commentEl.innerHTML = comment ? comment.replace(/\n/g, '<br>') : '';
+        }
+
+        // --- リスト管理処理 ---
+        function getFormData() {
+            return {
+                id: currentEditingId || Date.now().toString(),
+                eventName: document.getElementById('eventName').value,
+                eventDate: document.getElementById('eventDate').value,
+                year: document.getElementById('year').value,
+                workId: document.getElementById('workId').value,
+                title: document.getElementById('title').value,
+                author: document.getElementById('author').value,
+                authorRomaji: document.getElementById('authorRomaji').value,
+                penName: document.getElementById('penName').value,
+                schoolGrade: document.getElementById('schoolGrade').value,
+                medium: document.getElementById('medium').value,
+                size: document.getElementById('size').value,
+                remarks: document.getElementById('remarks').value,
+                comment: document.getElementById('comment').value,
+            };
+        }
+
+        function addToList() {
+            const data = getFormData();
+            if (!data.title) {
+                alert("作品名を入力してください。");
+                return;
+            }
+
+            if (currentEditingId) {
+                const index = captionsList.findIndex(item => item.id === currentEditingId);
+                if (index !== -1) {
+                    captionsList[index] = data;
+                }
+                currentEditingId = null;
+            } else {
+                captionsList.push(data);
+            }
+            
+            renderList();
+            
+            const btn = document.getElementById('addListBtn');
+            btn.textContent = '✓ 追加しました';
+            btn.classList.add('bg-cud-dark', 'hover:bg-black', 'text-white');
+            btn.classList.remove('bg-cud-btn-blue', 'hover:bg-blue-800');
+            setTimeout(() => {
+                btn.textContent = 'リストに追加 / 更新';
+                btn.classList.remove('bg-cud-dark', 'hover:bg-black');
+                btn.classList.add('bg-cud-btn-blue', 'hover:bg-blue-800');
+            }, 1500);
+        }
+
+        function renderList() {
+            const tbody = document.getElementById('caption-list-body');
+            const countSpan = document.getElementById('list-count');
+            
+            countSpan.textContent = `${captionsList.length}件`;
+            
+            if (captionsList.length === 0) {
+                tbody.innerHTML = '<tr class="border-b"><td colspan="4" class="px-4 py-8 text-center text-cud-gray">リストは空です。</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = captionsList.map(item => `
+                <tr class="border-b hover:bg-gray-50 ${item.id === currentEditingId ? 'bg-[#E6F3FF]' : ''}">
+                    <td class="px-4 py-3 font-medium text-cud-dark">${item.title}</td>
+                    <td class="px-4 py-3 text-cud-dark">${item.author}</td>
+                    <td class="px-4 py-3 text-cud-dark">${item.size}</td>
+                    <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                        <button onclick="editItem('${item.id}')" class="font-bold text-cud-blue hover:underline">編集</button>
+                        <button onclick="deleteItem('${item.id}')" class="font-bold text-cud-red hover:underline ml-2">削除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editItem(id) {
+            const item = captionsList.find(i => i.id === id);
+            if (!item) return;
+
+            currentEditingId = id;
+            document.getElementById('eventName').value = item.eventName || '';
+            document.getElementById('eventDate').value = item.eventDate || '';
+            document.getElementById('year').value = item.year || '';
+            document.getElementById('workId').value = item.workId || '';
+            document.getElementById('title').value = item.title || '';
+            document.getElementById('author').value = item.author || '';
+            document.getElementById('authorRomaji').value = item.authorRomaji || '';
+            document.getElementById('penName').value = item.penName || '';
+            document.getElementById('schoolGrade').value = item.schoolGrade || '';
+            document.getElementById('medium').value = item.medium || '';
+            document.getElementById('size').value = item.size || '';
+            document.getElementById('remarks').value = item.remarks || '';
+            document.getElementById('comment').value = item.comment || '';
+
+            updatePreview();
+            renderList();
+        }
+
+        function deleteItem(id) {
+            captionsList = captionsList.filter(i => i.id !== id);
+            if (currentEditingId === id) {
+                clearForm();
+            } else {
+                renderList();
+            }
+        }
+
+        function clearForm() {
+            currentEditingId = null;
+            document.getElementById('workId').value = '';
+            document.getElementById('title').value = '';
+            document.getElementById('author').value = '';
+            document.getElementById('authorRomaji').value = '';
+            document.getElementById('penName').value = '';
+            document.getElementById('schoolGrade').value = '';
+            document.getElementById('medium').value = '';
+            document.getElementById('size').value = '';
+            document.getElementById('remarks').value = '';
+            document.getElementById('comment').value = '';
+            updatePreview();
+            renderList();
+        }
+
+        // --- 印刷処理 ---
+        function getTepraPrintHTML(data) {
+            const gradeStr = data.schoolGrade ? data.schoolGrade : '';
+            return `
+            <div style="height: 18mm; width: max-content; min-width: 80mm; display: flex; align-items: center; padding: 0 4mm; font-family: 'LINE Seed JP', sans-serif; white-space: nowrap; page-break-after: always; box-sizing: border-box; overflow: hidden; background-color: white;">
+                <div style="font-size: 14pt; font-weight: bold; border-right: 2px solid #222222; padding-right: 4mm; margin-right: 4mm; color: #000000;">
+                    ${data.workId || 'ID未設定'}
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-size: 12pt; font-weight: bold; line-height: 1.2; color: #000000;">${data.title}</div>
+                    <div style="font-size: 8pt; color: #222222; line-height: 1.2; margin-top: 1mm;">
+                        ${data.author} <span style="color: #333333; margin-left: 2mm;">${gradeStr ? '('+gradeStr+')' : ''}</span>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function getDisplayCaptionPrintHTML(data) {
+            let commentHtml = '';
+            if (data.comment && data.comment.trim() !== '') {
+                commentHtml = `<p style="font-size: 12px; color: #222222; line-height: 1.6; text-align: justify; margin:0;">${data.comment.replace(/\n/g, '<br>')}</p>`;
+            }
+
+            return `
+            <div style="page-break-inside: avoid; background-color: white; width: 148mm; height: 100mm; padding: 32px; display: flex; flex-direction: column; position: relative; border: 1px solid #C8C8CB; box-sizing: border-box; font-family: 'LINE Seed JP', sans-serif;">
+                <div style="width: 100%; border-top: 1px solid #000000; margin-bottom: 24px;"></div>
+                <div style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 16px; font-family: 'Noto Serif JP', serif; letter-spacing: 0.05em; color: #000000; margin-top:0;">${data.title}</h2>
+                    <div style="margin-bottom: 16px;">
+                        <div style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 8px;">
+                            <span style="font-size: 20px; font-weight: 500; font-family: 'Noto Serif JP', serif; color: #000000; letter-spacing: 0.1em;">${data.author}</span>
+                            <span style="font-size: 14px; color: #333333; font-style: italic; font-family: 'Noto Serif JP', serif;">${data.authorRomaji}</span>
+                        </div>
+                        <div style="font-size: 14px; color: #222222;">${data.schoolGrade}</div>
+                    </div>
+                    <div style="width: 100%; border-top: 1px solid #C8C8CB; margin-bottom: 16px;"></div>
+                    <div style="margin-bottom: 16px; font-size: 14px; color: #222222; font-style: italic; font-family: 'Noto Serif JP', serif;">
+                        <div style="margin-bottom: 4px;">${data.year}</div>
+                        <div>${data.medium}</div>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        ${commentHtml}
+                    </div>
+                </div>
+                <div style="margin-top: 16px; display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px; padding-top: 16px; border-top: 1px solid #C8C8CB;">
+                    <div style="font-size: 10px; text-align: right; color: #333333; line-height: 1.2;">
+                        <div>狭山ヶ丘高等学校</div>
+                        <div>狭山ヶ丘高等学校付属中学校</div>
+                    </div>
+                    <div style="font-size: 16px; font-weight: bold; font-family: 'Noto Serif JP', serif; letter-spacing: 0.1em; color: #000000;">
+                        創作研究部
+                    </div>
+                    <div style="width: 32px; height: 32px; opacity: 0.8; margin-left: 8px;">
+                        <img src="soukenlogo.svg" onerror="this.style.display='none'" style="width: 100%; height: 100%; object-fit: contain;" alt="ロゴ" />
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function printLabels(type) {
+            const printRoot = document.getElementById('print-root');
+            printRoot.innerHTML = ''; // クリア
+            
+            const targetData = captionsList.length > 0 ? captionsList : [getFormData()];
+
+            let htmlString = '';
+            if (type === 'tepra') {
+                document.body.setAttribute('data-print-mode', 'tepra');
+                targetData.forEach(data => {
+                    htmlString += getTepraPrintHTML(data);
+                });
+            } else if (type === 'caption') {
+                document.body.setAttribute('data-print-mode', 'caption');
+                targetData.forEach(data => {
+                    htmlString += getDisplayCaptionPrintHTML(data);
+                });
+            }
+
+            printRoot.innerHTML = htmlString;
+            
+            // 少し待機してから印刷ダイアログを開く（DOMと画像の描画を待つ）
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+
+        // --- GAS連携処理 (async/awaitを正しく追加) ---
+        async function fetchFromGAS() {
+            const urlInput = document.getElementById('gasUrl').value;
+            const statusDiv = document.getElementById('gas-status');
+            
+            if (!urlInput) {
+                alert('GASのURLを入力してください。');
+                return;
+            }
+
+            statusDiv.textContent = '読み込み中...';
+            statusDiv.className = 'text-xs text-center font-bold h-4 text-cud-blue';
+
+            try {
+                const response = await fetch(urlInput);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                if (Array.isArray(data)) {
+                    data.forEach((row, index) => {
+                        const item = {
+                            id: `gas_${Date.now()}_${index}`,
+                            eventName: row['イベント名'] || row.eventName || '',
+                            eventDate: row['開催日'] || row.eventDate || '',
+                            year: row['制作年'] || row.year || '',
+                            workId: row['作品ID'] || row.workId || '',
+                            title: row['作品名'] || row.title || '',
+                            author: row['作者名'] || row.authorName || '',
+                            authorRomaji: row['ローマ字'] || row.authorRomaji || '',
+                            penName: row['ペンネーム'] || row.penName || '',
+                            schoolGrade: row['所属'] || row.schoolGrade || '',
+                            medium: row['画材'] || row.medium || '',
+                            size: row['サイズ'] || row.size || '',
+                            remarks: row['備考'] || row.remarks || '',
+                            comment: row['コメント'] || row.comment || ''
+                        };
+                        captionsList.push(item);
+                    });
+                    
+                    renderList();
+                    statusDiv.textContent = `${data.length}件のデータを読み込みました！`;
+                    statusDiv.className = 'text-xs text-center font-bold h-4 text-cud-green';
+                }
+            } catch (error) {
+                console.error('GAS Fetch Error:', error);
+                statusDiv.textContent = 'エラーが発生しました。URLを確認してください。';
+                statusDiv.className = 'text-xs text-center font-bold h-4 text-cud-red';
+            }
+        }
+
+        // 初期化
+        updatePreview();
+    </script>
+</body>
+</html>
