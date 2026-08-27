@@ -14,14 +14,15 @@
                         sans: ['"LINE Seed JP"', 'sans-serif'],
                     },
                     colors: {
-                        cud: {
-                            blue: '#005AFF',
-                            'btn-blue': '#0041C2', /* WCAG 2.2 コントラスト確保 */
-                            dark: '#222222',
-                            gray: '#84919E',
-                            lightgray: '#C8C8CB',
-                            green: '#03AF7A',
-                            red: '#FF4B00',
+                        souken: {
+                            pink: '#E3869B',
+                            pinkDark: '#C85A75', /* WCAG確保用 */
+                            purple: '#9D72A8',
+                            indigo: '#5B59A7',
+                            bg: '#FFF5F8',
+                            text: '#4A3B4E',
+                            'btn-gradient-start': '#C85A75',
+                            'btn-gradient-end': '#5B59A7',
                         }
                     }
                 }
@@ -31,8 +32,8 @@
     <style>
         body {
             font-family: 'LINE Seed JP', sans-serif;
-            background-color: #f3f4f6;
-            color: #222222;
+            background-color: #FFF5F8; /* かわいい極薄ピンク */
+            color: #4A3B4E; /* なじみの良い濃い紫 */
         }
         .form-input {
             width: 100%;
@@ -46,13 +47,13 @@
         }
         .form-input:focus {
             outline: none;
-            border-color: #005AFF;
-            box-shadow: 0 0 0 2px rgba(0, 90, 255, 0.2);
+            border-color: #E3869B;
+            box-shadow: 0 0 0 2px rgba(227, 134, 155, 0.2);
         }
         label {
             font-size: 0.875rem;
             font-weight: 700;
-            color: #222222;
+            color: #4A3B4E;
             display: block;
             margin-top: 1rem;
         }
@@ -61,17 +62,18 @@
 <body class="flex flex-col min-h-screen">
 
     <div class="flex-1 p-4 md:p-8">
-        <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-            <div class="bg-cud-dark p-6 text-white text-center">
-                <h1 class="text-2xl font-bold">作品登録フォーム</h1>
-                <p class="text-sm text-cud-lightgray mt-1">創作研究部 キャプション・名札用データ提出</p>
+        <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden border border-pink-100">
+            <!-- ロゴのグラデーションを再現したヘッダー -->
+            <div class="bg-gradient-to-r from-souken-pink via-souken-purple to-souken-indigo p-6 text-white text-center shadow-inner">
+                <h1 class="text-2xl font-bold drop-shadow-md">作品登録フォーム</h1>
+                <p class="text-sm text-pink-100 mt-1 drop-shadow">創作研究部 キャプション・名札用データ提出</p>
             </div>
 
             <form id="submission-form" class="p-6 md:p-8">
                 <!-- 共通情報 -->
-                <div class="mb-8 pb-6 border-b border-gray-200">
-                    <h2 class="text-lg font-bold text-cud-btn-blue mb-4 flex items-center gap-2">
-                        <span class="bg-[#E6F3FF] p-1 rounded">📋</span> 共通情報
+                <div class="mb-8 pb-6 border-b border-pink-100">
+                    <h2 class="text-lg font-bold text-souken-indigo mb-4 flex items-center gap-2">
+                        <span class="bg-pink-50 p-1.5 rounded-lg border border-pink-200 shadow-sm text-sm">📋</span> 共通情報
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -91,11 +93,11 @@
 
                 <!-- 作品情報 -->
                 <div class="mb-8">
-                    <h2 class="text-lg font-bold text-cud-btn-blue mb-4 flex items-center gap-2">
-                        <span class="bg-[#E6F3FF] p-1 rounded">🎨</span> 作品・作者情報
+                    <h2 class="text-lg font-bold text-souken-indigo mb-4 flex items-center gap-2">
+                        <span class="bg-purple-50 p-1.5 rounded-lg border border-purple-200 shadow-sm text-sm">🎨</span> 作品・作者情報
                     </h2>
                     
-                    <label>作品ID <span class="text-xs font-normal text-cud-gray">※割り当てられている場合のみ</span></label>
+                    <label>作品ID <span class="text-xs font-normal text-gray-500">※割り当てられている場合のみ</span></label>
                     <input type="text" id="workId" placeholder="A-01" class="form-input">
 
                     <label>作品名 <span class="text-cud-red">*</span></label>
@@ -143,7 +145,7 @@
 
                 <!-- 提出ボタン -->
                 <div class="mt-8">
-                    <button type="submit" id="submit-btn" class="w-full bg-cud-btn-blue hover:bg-blue-800 text-white font-bold py-4 rounded-xl shadow-md transition duration-200 text-lg flex justify-center items-center gap-2">
+                    <button type="submit" id="submit-btn" class="w-full bg-gradient-to-r from-souken-btn-gradient-start to-souken-btn-gradient-end hover:from-souken-pinkDark hover:to-souken-indigo text-white font-bold py-4 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 text-lg flex justify-center items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                         この内容で提出する
                     </button>
@@ -153,7 +155,8 @@
         </div>
     </div>
 
-    <footer class="bg-cud-dark text-white py-3 px-4 sm:px-6 flex justify-between items-center text-xs w-full shrink-0 z-50 border-t border-gray-800">
+    <!-- ダークプラム色のフッター -->
+    <footer class="bg-[#3A2B3E] text-white py-3 px-4 sm:px-6 flex justify-between items-center text-xs w-full shrink-0 z-50 border-t border-purple-900">
         <!-- 左端 -->
         <div class="flex items-center gap-4">
             <div class="h-10 w-auto flex items-center justify-center">
@@ -163,9 +166,9 @@
         
         <!-- 右端 -->
         <div class="flex items-center gap-4 text-right">
-            <div class="flex flex-col text-cud-lightgray">
+            <div class="flex flex-col text-gray-300">
                 <span class="font-bold tracking-wider text-[9px] sm:text-[10px] text-white">System Architect: HIROYUKI ENDO</span>
-                <span class="text-[8px] sm:text-[9px]">© 2026 Midnight Express Computational Archives</span>
+                <span class="text-[8px] sm:text-[9px] text-pink-200">© 2026 Midnight Express Computational Archives</span>
             </div>
             <div class="h-10 w-auto flex items-center justify-center">
                 <img src="mecalogo-white.svg" onerror="this.src='https://placehold.co/80x40/222222/ffffff?text=MECA'" alt="MECA Logo" class="h-full object-contain max-w-[80px]">
@@ -205,7 +208,6 @@
             statusDiv.textContent = '';
 
             try {
-                // fetch に await を使用 (これでエラーが解消されます)
                 const response = await fetch(gasUrl, {
                     method: 'POST',
                     mode: 'no-cors', // GASへのPOSTの基本設定
@@ -215,9 +217,8 @@
                     body: JSON.stringify(formData)
                 });
 
-                // no-cors のため response.ok 等は確認できないが、エラーでなければ成功とする
                 statusDiv.textContent = '🎉 送信が完了しました！';
-                statusDiv.className = 'mt-4 text-center font-bold text-sm h-6 text-cud-green';
+                statusDiv.className = 'mt-4 text-center font-bold text-sm h-6 text-souken-pinkDark';
                 
                 // フォームをリセット (共通情報以外)
                 document.getElementById('workId').value = '';
@@ -228,7 +229,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 statusDiv.textContent = '❌ エラーが発生しました。通信環境を確認してください。';
-                statusDiv.className = 'mt-4 text-center font-bold text-sm h-6 text-cud-red';
+                statusDiv.className = 'mt-4 text-center font-bold text-sm h-6 text-red-500';
             } finally {
                 // ボタンの復元
                 btn.disabled = false;
